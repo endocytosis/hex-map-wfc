@@ -26,7 +26,7 @@ export class Water {
     geometry.rotateX(-Math.PI / 2)
 
     // Sparkle uniforms
-    this._waterOpacity = uniform(0)
+    this._waterOpacity = uniform(0.1)
     this._waterSpeed = uniform(0.3)
     this._waterFreq = uniform(0.9)
     this._waterAngle = uniform(0)          // drift direction in radians

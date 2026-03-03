@@ -81,7 +81,7 @@ export class GUIManager {
     water: {
       y: 0.88,
       opacity: 0.1,
-      speed: 1.3,
+      speed: 1.5,
       freq: 1.5,
       angle: 0,
       brightness: 0.53,
@@ -487,7 +487,7 @@ export class GUIManager {
 
     // Water
     if (app.city.waterPlane) app.city.waterPlane.position.y = params.water.y
-    // Don't set _waterOpacity here — starts at 0 and fades in with waves after first grid
+    if (app.city._waterOpacity) app.city._waterOpacity.value = params.water.opacity
     if (app.city._waterSpeed) app.city._waterSpeed.value = params.water.speed
     if (app.city._waterFreq) app.city._waterFreq.value = params.water.freq
     if (app.city._waterAngle) app.city._waterAngle.value = params.water.angle * Math.PI / 180

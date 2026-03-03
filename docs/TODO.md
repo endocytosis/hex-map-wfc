@@ -1,12 +1,8 @@
 # TODO
 
-61547
-
 good seed: 31930
 
-- dial in AO
 - push.
-- send link to codrops
 
 
 ## blog post
@@ -17,7 +13,7 @@ good seed: 31930
 - 25s build time
 - AO full size
 - remove lut ref
-
+- send link to codrops
 
 #### LATER
 

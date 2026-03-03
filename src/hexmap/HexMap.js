@@ -2,7 +2,9 @@ import {
   Object3D,
   MeshPhysicalNodeMaterial,
   MeshBasicNodeMaterial,
+  PlaneGeometry,
   Mesh,
+  MeshStandardMaterial,
   TextureLoader,
   SRGBColorSpace,
 } from 'three/webgpu'
@@ -119,6 +121,7 @@ export class HexMap {
   async init() {
     await HexTileGeometry.init('./assets/models/hex-terrain.glb')
     Decorations.initGeometries(HexTileGeometry.gltfScene)
+    this.createFloor()
     this.water = new Water(this.scene, this.coastMaskTexture, this.coveMaskTexture)
     this.water.init()
     await this.initMaterial()
@@ -278,6 +281,20 @@ export class HexMap {
     return changedTilesPerGrid
   }
 
+  createFloor() {
+    const floorGeometry = new PlaneGeometry(296, 296)
+    floorGeometry.rotateX(-Math.PI / 2)
+
+    const floorMaterial = new MeshStandardMaterial({
+      color: 0x999999,
+      roughness: 0.9,
+      metalness: 0.0,
+    })
+
+    this.floor = new Mesh(floorGeometry, floorMaterial)
+    this.floor.receiveShadow = true
+    this.scene.add(this.floor)
+  }
 
   /**
    * Create a new HexGrid at grid coordinates (starts in PLACEHOLDER state)

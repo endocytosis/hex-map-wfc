@@ -2,6 +2,7 @@ import {
   RenderTarget, RGBAFormat, LinearFilter,
   Scene, OrthographicCamera,
   Mesh, PlaneGeometry, CircleGeometry, MeshBasicNodeMaterial, Color, Vector2, Vector4,
+  InstancedMesh, Object3D, DynamicDrawUsage,
 } from 'three/webgpu'
 import { vec3, vec2, uv, float, texture, uniform, select } from 'three/tsl'
 import { CUBE_DIRS, cubeKey, cubeToOffset } from '../HexWFCCore.js'
@@ -148,8 +149,20 @@ export class WavesMask {
     const hexRadius = 2 / Math.sqrt(3)
     this._coveGeom = new CircleGeometry(hexRadius, 6, Math.PI / 6)
     this._coveGeom.rotateX(-Math.PI / 2)
-    this._covePool = []
+    this._maxCoveInstances = 4096
+    this._coveInstanced = new InstancedMesh(this._coveGeom, this._coveMat, this._maxCoveInstances)
+    this._coveInstanced.instanceMatrix.setUsage(DynamicDrawUsage)
+    this._coveInstanced.frustumCulled = false
+    const _tmpObj = new Object3D()
+    _tmpObj.position.set(0, -9999, 0)
+    _tmpObj.updateMatrix()
+    for (let i = 0; i < this._maxCoveInstances; i++) {
+      this._coveInstanced.setMatrixAt(i, _tmpObj.matrix)
+    }
+    this._coveInstanced.instanceMatrix.needsUpdate = true
     this._coveScene = new Scene()
+    this._coveScene.add(this._coveInstanced)
+    this._coveObj = new Object3D()
 
     // ---- Solid blue material (for water plane in mask render) ----
     this._blueMat = new MeshBasicNodeMaterial()
@@ -289,30 +302,24 @@ export class WavesMask {
     const { renderer, _rtCove, _sceneCam } = this
 
     const coveCells = this._computeCoveCells(globalCells)
-
-    // Grow pool if needed
-    while (this._covePool.length < coveCells.length) {
-      const mesh = new Mesh(this._coveGeom, this._coveMat)
-      mesh.visible = false
-      this._covePool.push(mesh)
-      this._coveScene.add(mesh)
+    const obj = this._coveObj
+    const count = Math.min(coveCells.length, this._maxCoveInstances)
+    for (let i = 0; i < count; i++) {
+      obj.position.set(coveCells[i].worldX, 50, coveCells[i].worldZ)
+      obj.updateMatrix()
+      this._coveInstanced.setMatrixAt(i, obj.matrix)
     }
-
-    // Update positions and visibility
-    for (let i = 0; i < coveCells.length; i++) {
-      this._covePool[i].position.set(coveCells[i].worldX, 50, coveCells[i].worldZ)
-      this._covePool[i].visible = true
+    obj.position.set(0, -9999, 0)
+    obj.updateMatrix()
+    for (let i = count; i < this._maxCoveInstances; i++) {
+      this._coveInstanced.setMatrixAt(i, obj.matrix)
     }
-    for (let i = coveCells.length; i < this._covePool.length; i++) {
-      this._covePool[i].visible = false
-    }
+    this._coveInstanced.instanceMatrix.needsUpdate = true
 
     renderer.setRenderTarget(_rtCove)
     renderer.setClearColor(0x000000, 1)
     renderer.clear()
-    if (coveCells.length > 0) {
-      renderer.render(this._coveScene, _sceneCam)
-    }
+    renderer.render(this._coveScene, _sceneCam)
 
     // Dilate outward (expand white into surrounding black)
     this._simpleDilateTexNode.value = _rtCove.texture

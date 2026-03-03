@@ -164,14 +164,15 @@ export class App {
         this._pendingMaskRender = null
       }
 
-      // Sync tween target with current uniform values
+      // Kill any running wave tweens and sync target with current uniforms
+      gsap.killTweensOf(this._waveFade)
       this._waveFade.opacity = opacity.value
       this._waveFade.gradOpacity = this.city._waveGradientOpacity?.value ?? 0
       this._waveFade.mask = this.city._waveMaskStrength?.value ?? 1
 
       gsap.to(this._waveFade, {
         opacity: 0, gradOpacity: 0, mask: 0,
-        duration: 0.5, overwrite: true,
+        duration: 0.5,
         onUpdate: () => {
           opacity.value = this._waveFade.opacity
           if (this.city._waveGradientOpacity) this.city._waveGradientOpacity.value = this._waveFade.gradOpacity
@@ -199,15 +200,8 @@ export class App {
       const renderMask = () => {
         if (token.cancelled) return
 
-        // Fade in sparkles on first grid build
-        const sparkleOpacity = this.city._waterOpacity
-        if (sparkleOpacity && sparkleOpacity.value === 0) {
-          gsap.to(sparkleOpacity, {
-            value: this.params.water.opacity,
-            duration: 2, delay: 1,
-          })
-        }
-
+        // Kill any running wave tweens, snap to 0, render mask, fade back up
+        gsap.killTweensOf(this._waveFade)
         opacity.value = 0
         if (this.city._waveGradientOpacity) this.city._waveGradientOpacity.value = 0
         if (this.city._waveMaskStrength) this.city._waveMaskStrength.value = 0
@@ -225,7 +219,7 @@ export class App {
           opacity: this.params.waves.opacity,
           gradOpacity: this.params.waves.gradientOpacity,
           mask: 1,
-          duration: 2, delay: 1, overwrite: true,
+          duration: 2, delay: 1,
           onUpdate: () => {
             opacity.value = this._waveFade.opacity
             if (this.city._waveGradientOpacity) this.city._waveGradientOpacity.value = this._waveFade.gradOpacity
