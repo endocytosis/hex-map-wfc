@@ -274,6 +274,7 @@ export class App {
     this.gui.applyParams()
 
     // Move FPS meter into GUI panel, above DPR
+    this.stats.dom.style.display = ''
     this.stats.dom.style.position = 'relative'
     this.stats.dom.style.top = ''
     this.stats.dom.style.left = '106px'
@@ -396,6 +397,7 @@ export class App {
   initStats() {
     this.stats = new Stats()
     this.stats.showPanel(0) // 0: fps, 1: ms, 2: mb
+    this.stats.dom.style.display = 'none'
     document.body.appendChild(this.stats.dom)
   }
 

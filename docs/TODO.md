@@ -1,6 +1,9 @@
 # TODO
 
-good seed: 31930
+good seeds: 
+31930
+62198
+72256
 
 - push.
 
@@ -14,6 +17,7 @@ good seed: 31930
 - AO full size
 - remove lut ref
 - send link to codrops
+- set up GitHub Pages to host blog (Settings → Pages, source: main branch, /docs folder)
 
 #### LATER
 
