@@ -235,7 +235,7 @@ The result: 4,100+ cells, 38 BatchedMeshes, and the whole thing renders at 60fps
 
 <!-- full -->
 ![snow day](img/white.jpg)
-
+*Snow Day*
 
 ## Summary
 
@@ -272,12 +272,9 @@ No dice required this time — but the feeling is the same. You hit a button, th
 
 ## Try It
 
-**[Play with the live demo](https://felixturner.github.io/hex-map-wfc/)** — click the hex buttons to expand the map, or hit Auto Build to generate the whole thing. There's a full GUI panel with 100+ tweakable parameters if you want to mess with the lighting, color grading, water effects, and WFC settings.
+**[Play with the live demo](https://felixturner.github.io/hex-map-wfc/)** — click the hex buttons to expand the map, or hit 'Build All' to generate the whole thing. There's a full GUI panel with 50+ tweakable parameters if you want to mess with the lighting, color grading, water effects, and WFC settings.
 
 **[Full source code on GitHub](https://github.com/felixturner/hex-map-wfc)**
-
-<!-- inline -->
-![Final beauty shot of a completed map](img/colors.jpg)
 
 ---
 

@@ -97,8 +97,8 @@ header { margin-bottom: 3rem; }
   margin-top: 0.6rem;
 }
 
-.subtitle a { color: var(--text-dim); text-decoration-color: #555; }
-.subtitle a:hover { color: var(--accent); }
+.subtitle a { color: var(--link); text-decoration-color: #444; }
+.subtitle a:hover { color: var(--link-hover); text-decoration-color: var(--link-hover); }
 
 ol, ul { margin-bottom: 1.2rem; padding-left: 1.4rem; }
 li { margin-bottom: 0.5rem; }
@@ -173,28 +173,6 @@ figure.full img {
   object-fit: cover;
 }
 
-/* ── Paired images: 2-up, half height ── */
-.pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin: 3rem 0;
-}
-
-.pair figure {
-  margin: 0;
-}
-
-.pair figure img {
-  border-radius: 4px;
-  aspect-ratio: 7 / 5;
-  object-fit: cover;
-}
-
-.pair figcaption {
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
-}
 
 /* ── Stats Grid ── */
 .stats {
@@ -212,7 +190,6 @@ figure.full img {
 .tech-list li { padding: 0.3rem 0; break-inside: avoid; }
 
 .cta { margin-top: 4rem; }
-.cta p a { color: var(--accent); text-decoration-color: var(--accent); }
 
 footer { margin-top: 5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
 footer h2 { margin-top: 0; }
@@ -229,41 +206,6 @@ footer li { margin-bottom: 0.6rem; }
   background: #111;
 }
 
-figure .slideshow img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  animation: slide 24s infinite;
-}
-
-figure .slideshow img:first-child {
-  opacity: 1;
-}
-
-figure .slideshow img:nth-child(1)  { animation-delay: 0s; }
-figure .slideshow img:nth-child(2)  { animation-delay: 2s; }
-figure .slideshow img:nth-child(3)  { animation-delay: 4s; }
-figure .slideshow img:nth-child(4)  { animation-delay: 6s; }
-figure .slideshow img:nth-child(5)  { animation-delay: 8s; }
-figure .slideshow img:nth-child(6)  { animation-delay: 10s; }
-figure .slideshow img:nth-child(7)  { animation-delay: 12s; }
-figure .slideshow img:nth-child(8)  { animation-delay: 14s; }
-figure .slideshow img:nth-child(9)  { animation-delay: 16s; }
-figure .slideshow img:nth-child(10) { animation-delay: 18s; }
-figure .slideshow img:nth-child(11) { animation-delay: 20s; }
-figure .slideshow img:nth-child(12) { animation-delay: 22s; }
-
-@keyframes slide {
-  0%     { opacity: 0; }
-  1.25%  { opacity: 1; }
-  9.58%  { opacity: 1; }
-  9.59%  { opacity: 0; }
-  100%   { opacity: 0; }
-}
 
 /* ── Captioned Slideshow ── */
 .slideshow-captioned .slide {
