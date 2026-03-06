@@ -44,32 +44,49 @@
         height: 48px;
         margin-bottom: 24px;
       }
-      #start-btn {
-        display: none;
-        padding: 12px 32px;
-        background: transparent;
-        border: 2px solid #fff;
-        border-radius: 24px;
-        color: #fff;
-        font-family: ui-monospace, monospace;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s;
-      }
-      #start-btn:hover {
-        background: #fff;
-        color: #000;
-      }
       .lil-gui.gui-hidden { display: none; }
       @media (orientation: portrait) {
         #ui-menu { flex-direction: column !important; }
       }
+      #title-overlay {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        text-shadow: 0 1px 3px rgba(0,0,0,0.48);
+      }
+      #title-overlay .title-row {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      #title-overlay .title {
+        font-weight: 500;
+      }
+      #title-overlay a {
+        color: rgba(255,255,255,0.8);
+        text-decoration: underline;
+      }
+      #status-text {
+        margin-top: 8px;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
+    <div id="title-overlay">
+      <div class="title-row">
+        <div class="title">Hex Map Toy</div>
+        <a href="https://felixturner.github.io/hex-map-wfc/article/" target="_blank">Read Article</a>
+        <a href="https://github.com/felixturner/hex-map-wfc" target="_blank">Source</a>
+      </div>
+      <div id="status-text"></div>
+    </div>
     <div id="loading">
       <img src="assets/loader.gif" alt="Loading" id="loader-gif" />
-      <button id="start-btn">Start</button>
     </div>
     <canvas id="canvas"></canvas>
     <script type="module" src="/src/main.js"></script>

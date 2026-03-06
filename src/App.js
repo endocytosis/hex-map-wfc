@@ -405,34 +405,8 @@ export class App {
   }
 
   initStatusOverlay() {
-    this.statusElement = document.createElement('div')
-    this.statusElement.style.cssText = `
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      color: white;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-      pointer-events: none;
-      z-index: 1000;
-    `
-    document.body.appendChild(this.statusElement)
-
-    // Seed display (bottom-right)
-    this.seedElement = document.createElement('div')
-    this.seedElement.style.cssText = `
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      color: white;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-      pointer-events: none;
-      z-index: 1000;
-    `
-    document.body.appendChild(this.seedElement)
+    this.statusElement = document.getElementById('status-text')
+    this.seedElement = { textContent: '' } // no-op stub (seed hidden in HTML)
   }
 
   initModeButtons() {
@@ -458,11 +432,12 @@ export class App {
       text-shadow: 0 1px 3px rgba(0,0,0,0.48);
     `
 
+    // Buttons container (bottom-left)
     const container = document.createElement('div')
     container.id = 'ui-menu'
     container.style.cssText = `
       position: fixed;
-      top: 10px;
+      bottom: 10px;
       left: 10px;
       display: flex;
       flex-direction: row;
