@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 
 const fullReloadAlways = {
   name: 'full-reload-always',
@@ -12,7 +11,7 @@ const fullReloadAlways = {
 export default defineConfig({
   root: '',
   base: './',
-  plugins: [fullReloadAlways, basicSsl()],
+  plugins: [fullReloadAlways],
   server: {
     port: 5176,
     watch: {
