@@ -20,6 +20,8 @@ import { PostFX } from './PostFX.js'
 import { WavesMask } from './hexmap/effects/WavesMask.js'
 import { setSeed } from './SeededRandom.js'
 import { LEVELS_COUNT } from './hexmap/HexTileData.js'
+import { TDManager } from './td/TDManager.js'
+import { GamePhase } from './td/GameState.js'
 import gsap from 'gsap'
 
 // Global status update function
@@ -66,6 +68,8 @@ export class App {
     this.params = null
     this.cssRenderer = null  // CSS2DRenderer for debug labels
     this.buildMode = false  // false = Move (camera only), true = Build (click to WFC)
+    this.tdManager = null
+    this.tdMode = false  // true = tower defense active
 
     if (App.instance != null) {
       console.warn('App instance already exists')
@@ -228,31 +232,49 @@ export class App {
       promise.then(renderMask)
     }
 
-    // Set up hover and click detection on hex tiles and placeholders
+    this.tdManager = new TDManager(this.scene, this.city, this.camera)
+    this.tdManager.init()
+    this.tdManager.gameState.on('restart', () => {
+      this.exitTDMode()
+    })
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.tdMode) {
+        if (this.tdManager.placementType) {
+          this.tdManager.cancelPlacement()
+          this.tdManager.gameState.selectedTowerType = null
+          this.tdManager.ui._updateTowerButtons()
+        }
+      }
+    })
+
     this.pointerHandler.setRaycastTargets(
-      [],  // Dynamic targets - we'll handle raycasting in callbacks
+      [],
       {
         onHover: (intersection) => this.city.onHover(intersection),
         onPointerDown: (intersection, clientX, clientY, isTouch) => {
-          // Convert client coords to normalized device coordinates
           const pointer = new Vector2(
             (clientX / window.innerWidth) * 2 - 1,
             -(clientY / window.innerHeight) * 2 + 1
           )
-          // Check placeholders
+          if (this.tdMode) {
+            return this.tdManager.onPointerDown(pointer)
+          }
           if (this.city.onPointerDown(pointer, this.camera)) {
-            return true  // Placeholder was clicked
+            return true
           }
           return false
         },
         onPointerUp: (isTouch, touchIntersection) => this.city.onPointerUp(isTouch, touchIntersection),
         onPointerMove: (clientX, clientY) => {
-          // Convert client coords to normalized device coordinates
           const pointer = new Vector2(
             (clientX / window.innerWidth) * 2 - 1,
             -(clientY / window.innerHeight) * 2 + 1
           )
-          // Update placeholder hover state
+          if (this.tdMode) {
+            this.tdManager.onPointerMove(pointer)
+            return
+          }
           this.city.onPointerMove(pointer, this.camera)
         },
         onRightClick: (intersection) => this.city.onRightClick(intersection)
@@ -493,7 +515,6 @@ export class App {
     }
     container.appendChild(toggle)
 
-    // Action buttons
     const actions = [
       { label: 'Build All', action: () => {
         this.city.autoBuild([
@@ -522,7 +543,31 @@ export class App {
       container.appendChild(btn)
     }
 
-    // Settings toggle
+    const defendBtn = document.createElement('button')
+    defendBtn.textContent = 'Defend!'
+    defendBtn.id = 'defend-btn'
+    defendBtn.style.cssText = `
+      ${btnBase}
+      border-color: rgba(231,76,60,0.6);
+      background: rgba(231,76,60,0.2);
+      font-weight: 500;
+    `
+    defendBtn.addEventListener('mouseenter', () => {
+      defendBtn.style.borderColor = 'rgba(231,76,60,0.9)'
+      defendBtn.style.background = 'rgba(231,76,60,0.4)'
+    })
+    defendBtn.addEventListener('mouseleave', () => {
+      defendBtn.style.borderColor = 'rgba(231,76,60,0.6)'
+      defendBtn.style.background = 'rgba(231,76,60,0.2)'
+    })
+    defendBtn.addEventListener('pointerdown', (e) => e.stopPropagation())
+    defendBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      this.enterTDMode()
+    })
+    container.appendChild(defendBtn)
+    this._defendBtn = defendBtn
+
     const guiBtn = document.createElement('button')
     guiBtn.textContent = 'Controls'
     guiBtn.style.cssText = btnBase
@@ -593,8 +638,10 @@ export class App {
       postFX.grainTime.value = Math.floor(timer.getElapsed() * noiseFPS) / noiseFPS
     }
 
-    // Update debris physics
     this.city.update(dt)
+    if (this.tdMode && this.tdManager) {
+      this.tdManager.update(dt)
+    }
 
     // Update render layers
     const maskObjects = []
@@ -617,6 +664,48 @@ export class App {
     }
 
     this.stats.end()
+  }
+
+  enterTDMode() {
+    const populatedCount = this.city.countPopulatedGrids()
+    if (populatedCount === 0) return
+
+    this.tdMode = true
+    this.buildMode = false
+    this.city.clearHoverHighlight()
+
+    const uiMenu = document.getElementById('ui-menu')
+    if (uiMenu) uiMenu.style.display = 'none'
+
+    const titleOverlay = document.getElementById('title-overlay')
+    if (titleOverlay) titleOverlay.style.display = 'none'
+
+    for (const grid of this.city.grids.values()) {
+      if (grid.placeholder) grid.placeholder.hide()
+      if (grid.outline) grid.outline.visible = false
+    }
+
+    const success = this.tdManager.enable()
+    if (!success) {
+      this.exitTDMode()
+    }
+  }
+
+  exitTDMode() {
+    this.tdMode = false
+    this.tdManager.disable()
+
+    const uiMenu = document.getElementById('ui-menu')
+    if (uiMenu) uiMenu.style.display = 'flex'
+
+    const titleOverlay = document.getElementById('title-overlay')
+    if (titleOverlay) titleOverlay.style.display = 'block'
+
+    this.city.reset()
+    this.city.setHelpersVisible(this.params.debug?.hexGrid ?? false)
+    this.perspCamera.position.set(0, 100, 58.5)
+    this.controls.target.set(0, 1, 0)
+    this.controls.update()
   }
 
   exportPNG({ format = 'image/jpeg', quality = 0.85, filename } = {}) {
