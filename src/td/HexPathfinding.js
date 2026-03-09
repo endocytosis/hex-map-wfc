@@ -117,16 +117,6 @@ function parseCubeKeyStr(key) {
 }
 
 export function findSpawnAndGoalCells(globalCells) {
-  let minQ = Infinity, maxQ = -Infinity
-  let minR = Infinity, maxR = -Infinity
-
-  for (const cell of globalCells.values()) {
-    if (cell.q < minQ) minQ = cell.q
-    if (cell.q > maxQ) maxQ = cell.q
-    if (cell.r < minR) minR = cell.r
-    if (cell.r > maxR) maxR = cell.r
-  }
-
   const candidates = []
   for (const [key, cell] of globalCells) {
     if (!isWalkable(cell.type)) continue
@@ -147,22 +137,63 @@ export function findSpawnAndGoalCells(globalCells) {
 
   if (edgeCells.length < 2) return null
 
-  let bestDist = 0
-  let spawn = null
-  let goal = null
+  const walkableKeys = new Set(candidates.map(c => c.key))
+  const regions = floodFillRegions(edgeCells, walkableKeys, globalCells)
 
-  for (let i = 0; i < edgeCells.length; i++) {
-    for (let j = i + 1; j < edgeCells.length; j++) {
-      const a = edgeCells[i].cell
-      const b = edgeCells[j].cell
-      const dist = heuristic(a, b)
-      if (dist > bestDist) {
-        bestDist = dist
-        spawn = edgeCells[i]
-        goal = edgeCells[j]
+  let bestResult = null
+  let bestDist = 0
+
+  for (const region of regions) {
+    if (region.length < 2) continue
+    for (let i = 0; i < region.length; i++) {
+      for (let j = i + 1; j < region.length; j++) {
+        const a = region[i].cell
+        const b = region[j].cell
+        const dist = heuristic(a, b)
+        if (dist > bestDist) {
+          bestDist = dist
+          bestResult = { spawn: region[i], goal: region[j] }
+        }
       }
     }
   }
 
-  return spawn && goal ? { spawn, goal } : null
+  return bestResult
+}
+
+function floodFillRegions(edgeCells, walkableKeys, globalCells) {
+  const visited = new Set()
+  const regions = []
+  const edgeKeySet = new Set(edgeCells.map(c => c.key))
+  const edgeMap = new Map(edgeCells.map(c => [c.key, c]))
+
+  for (const start of edgeCells) {
+    if (visited.has(start.key)) continue
+
+    const region = []
+    const queue = [start.key]
+    visited.add(start.key)
+
+    while (queue.length > 0) {
+      const currentKey = queue.shift()
+      if (edgeKeySet.has(currentKey)) {
+        region.push(edgeMap.get(currentKey))
+      }
+
+      const { q, r, s } = parseCubeKeyStr(currentKey)
+      for (const dir of CUBE_DIRS) {
+        const nKey = cubeKey(q + dir.dq, r + dir.dr, s + dir.ds)
+        if (visited.has(nKey)) continue
+        if (!walkableKeys.has(nKey)) continue
+        visited.add(nKey)
+        queue.push(nKey)
+      }
+    }
+
+    if (region.length >= 2) {
+      regions.push(region)
+    }
+  }
+
+  return regions
 }
