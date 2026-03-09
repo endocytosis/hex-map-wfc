@@ -29,6 +29,7 @@ import { initGlobalTreeNoise, rebuildNoiseTables, Decorations } from './Decorati
 import { Water } from './effects/Water.js'
 import { random, setSeed } from '../SeededRandom.js'
 import { Sounds } from '../lib/Sounds.js'
+import { generateRoadPath } from '../td/RoadPathGenerator.js'
 
 const LEVEL_HEIGHT = 0.5
 const TILE_SURFACE = 1
@@ -113,6 +114,9 @@ export class HexMap {
     this._wfcIdleResolve = null
     this._autoBuilding = false
     this._waterSideIndex = null
+
+    this.roadPath = null
+    this.roadCubeKeys = null
 
     // Convenience alias
     this.hexWfcRules = null
@@ -1067,6 +1071,8 @@ export class HexMap {
     this.droppedCells.clear()
     this.seededCells.clear()
     this._waterSideIndex = null
+    this.roadPath = null
+    this.roadCubeKeys = null
     this.clearTileLabels()
 
     const gridsToDispose = [...this.grids.values()]
@@ -1129,7 +1135,24 @@ export class HexMap {
       ...this.getMapCornerOceanSeeds(),
     ]
 
-    // Track seeded cells for debug labels
+    const oceanKeys = new Set(initialCollapses.map(c => cubeKey(c.q, c.r, c.s)))
+    const roadResult = generateRoadPath(allSolveCells, this._waterSideIndex, oceanKeys)
+    if (roadResult) {
+      for (const rc of roadResult.collapses) {
+        const rk = cubeKey(rc.q, rc.r, rc.s)
+        if (!oceanKeys.has(rk)) {
+          initialCollapses.push(rc)
+        }
+      }
+      this.roadPath = roadResult.path
+      this.roadCubeKeys = roadResult.roadCubeKeys
+      log(`[BUILD ALL] Road path seeded: ${roadResult.roadCubeKeys.length} tiles`, 'color: blue')
+    } else {
+      this.roadPath = null
+      this.roadCubeKeys = null
+      log('[BUILD ALL] Could not generate road path', 'color: orange')
+    }
+
     for (const ic of initialCollapses) {
       const co = cubeToOffset(ic.q, ic.r, ic.s)
       this.seededCells.add(`${co.col},${co.row}`)
@@ -1562,6 +1585,8 @@ export class HexMap {
     this.replacedCells.clear()
     this.seededCells.clear()
     this._waterSideIndex = null
+    this.roadPath = null
+    this.roadCubeKeys = null
     this.clearTileLabels()
 
     const gridsToDispose = [...this.grids.values()]

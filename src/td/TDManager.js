@@ -18,8 +18,8 @@ import { TOWER_DEFS, TowerType } from './TowerDefs.js'
 import { Enemy } from './Enemy.js'
 import { Projectile } from './Projectile.js'
 import { WaveManager } from './WaveManager.js'
-import { findPath, findSpawnAndGoalCells, cubeKeyToWorld, isWalkable } from './HexPathfinding.js'
-import { cubeKey, cubeToOffset, offsetToCube, localToGlobalCoords, parseCubeKey } from '../hexmap/HexWFCCore.js'
+import { cubeKeyToWorld, isWalkable } from './HexPathfinding.js'
+import { cubeKey, offsetToCube, localToGlobalCoords } from '../hexmap/HexWFCCore.js'
 import { HexTileGeometry } from '../hexmap/HexTiles.js'
 import { HexGridState } from '../hexmap/HexGrid.js'
 import { Sounds } from '../lib/Sounds.js'
@@ -65,20 +65,26 @@ export class TDManager {
     if (this._enabled) return
     this._enabled = true
 
-    const endpoints = findSpawnAndGoalCells(this.hexMap.globalCells)
-    if (!endpoints) {
-      console.warn('[TD] Could not find spawn/goal cells')
+    const roadKeys = this.hexMap.roadCubeKeys
+    if (!roadKeys || roadKeys.length < 2) {
+      console.warn('[TD] No road path on map')
       return false
     }
 
-    this.spawnCell = endpoints.spawn
-    this.goalCell = endpoints.goal
+    this.roadPath = roadKeys
+    this._roadKeySet = new Set(roadKeys)
+    const firstKey = roadKeys[0]
+    const lastKey = roadKeys[roadKeys.length - 1]
+    const firstCell = this.hexMap.globalCells.get(firstKey)
+    const lastCell = this.hexMap.globalCells.get(lastKey)
 
-    const path = findPath(this.hexMap.globalCells, endpoints.spawn.cell, endpoints.goal.cell)
-    if (!path) {
-      console.warn('[TD] No valid path between spawn and goal')
+    if (!firstCell || !lastCell) {
+      console.warn('[TD] Road endpoint cells not found in globalCells')
       return false
     }
+
+    this.spawnCell = { key: firstKey, cell: firstCell }
+    this.goalCell = { key: lastKey, cell: lastCell }
 
     this._createEndpointMarkers()
     this.gameState.setPhase(GamePhase.PREPARE)
@@ -221,17 +227,10 @@ export class TDManager {
     const cell = this.hexMap.globalCells.get(cKey)
     const isWalk = cell && isWalkable(cell.type)
     const isOccupied = this.towerPositions.has(cKey)
-    const isEndpoint = cKey === this.spawnCell?.key || cKey === this.goalCell?.key
-    const canPlace = isWalk && !isOccupied && !isEndpoint
+    const isOnRoad = this._roadKeySet && this._roadKeySet.has(cKey)
+    const canPlace = isWalk && !isOccupied && !isOnRoad
 
-    if (canPlace) {
-      const testTowers = new Set(this.towerPositions.keys())
-      testTowers.add(cKey)
-      const testPath = findPath(this.hexMap.globalCells, this.spawnCell.cell, this.goalCell.cell, testTowers)
-      this.placementValid = testPath !== null
-    } else {
-      this.placementValid = false
-    }
+    this.placementValid = canPlace
 
     this.placementCubeKey = cKey
 
@@ -335,13 +334,7 @@ export class TDManager {
 
     if (!this.gameState.nextWave()) return
 
-    const path = findPath(this.hexMap.globalCells, this.spawnCell.cell, this.goalCell.cell, new Set(this.towerPositions.keys()))
-    if (!path) {
-      console.warn('[TD] No path for enemies')
-      return
-    }
-
-    this.currentPath = path
+    this.currentPath = this.roadPath
     this.waveManager.startWave(this.gameState.wave)
     Sounds.play('roll', 1.0, 0.2)
   }
@@ -398,6 +391,8 @@ export class TDManager {
     this.activeEnemies = []
     this.activeProjectiles = []
     this.towerPositions.clear()
+    this.roadPath = null
+    this._roadKeySet = null
 
     if (this.spawnMarker) {
       this.spawnMarker.traverse(c => { c.geometry?.dispose(); c.material?.dispose() })

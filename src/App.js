@@ -517,9 +517,8 @@ export class App {
 
     const actions = [
       { label: 'Build All', action: () => {
-        this.city.autoBuild([
-          [0,0],[0,-1],[1,-1],[1,0],[0,1],[-1,0],[-1,-1],[-1,-2],[0,-2],[1,-2],[2,-1],[2,0],[2,1],[1,1],[0,2],[-1,1],[-2,1],[-2,0],[-2,-1]
-        ])
+        import('./lib/Sounds.js').then(({ Sounds }) => Sounds.play('pop', 1.0, 0, 0.3))
+        this.city.populateAllGrids()
       }},
       { label: 'Clear All', action: () => {
         this.city.reset()
